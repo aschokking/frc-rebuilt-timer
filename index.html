@@ -48,6 +48,49 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .overall-progress-container {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .overall-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .overall-timer {
+            font-size: 2rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .overall-label {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .overall-progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .overall-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.1s linear;
+            border-radius: 15px;
+        }
+
         .progress-container {
             width: 100%;
             height: 40px;
@@ -200,6 +243,14 @@
                 font-size: 0.9rem;
                 padding: 10px 15px;
             }
+
+            .overall-timer {
+                font-size: 1.5rem;
+            }
+
+            .overall-label {
+                font-size: 1rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -221,11 +272,32 @@
                 font-size: 0.8rem;
                 padding: 8px 12px;
             }
+
+            .overall-timer {
+                font-size: 1.2rem;
+            }
+
+            .overall-label {
+                font-size: 0.9rem;
+            }
+
+            .overall-progress-container {
+                padding: 10px 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="overall-progress-container">
+            <div class="overall-progress-header">
+                <span class="overall-label">Match Progress</span>
+                <span id="overallTimer" class="overall-timer">2:40</span>
+            </div>
+            <div class="overall-progress-bar-container">
+                <div id="overallProgressBar" class="overall-progress-bar"></div>
+            </div>
+        </div>
         <div id="phasesList" class="phases-list"></div>
         <div id="phaseDisplay" class="phase-display phase-auto">AUTO</div>
         <div id="timerDisplay" class="timer-display">0:20</div>
@@ -265,6 +337,8 @@
         let audioContext = null;
 
         // DOM elements
+        const overallTimer = document.getElementById('overallTimer');
+        const overallProgressBar = document.getElementById('overallProgressBar');
         const phaseDisplay = document.getElementById('phaseDisplay');
         const timerDisplay = document.getElementById('timerDisplay');
         const progressBar = document.getElementById('progressBar');
@@ -272,6 +346,9 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const resetBtn = document.getElementById('resetBtn');
+
+        // Calculate total match duration
+        const TOTAL_MATCH_DURATION = PHASES.reduce((sum, phase) => sum + phase.duration, 0);
 
         // Initialize audio context on first user interaction
         function initAudio() {
@@ -332,9 +409,28 @@
             });
         }
 
+        // Calculate total time remaining in match
+        function getTotalTimeRemaining() {
+            // Sum up completed phases
+            let totalElapsed = 0;
+            for (let i = 0; i < currentPhaseIndex; i++) {
+                totalElapsed += PHASES[i].duration;
+            }
+            // Add elapsed time in current phase
+            totalElapsed += (PHASES[currentPhaseIndex].duration - timeRemaining);
+            // Return remaining time
+            return TOTAL_MATCH_DURATION - totalElapsed;
+        }
+
         // Update display
         function updateDisplay() {
             const phase = PHASES[currentPhaseIndex];
+
+            // Update overall match progress
+            const totalTimeRemaining = getTotalTimeRemaining();
+            overallTimer.textContent = formatTime(totalTimeRemaining);
+            const overallProgress = (totalTimeRemaining / TOTAL_MATCH_DURATION) * 100;
+            overallProgressBar.style.width = overallProgress + '%';
 
             // Update phase display
             phaseDisplay.textContent = phase.name;
