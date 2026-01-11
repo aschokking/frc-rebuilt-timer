@@ -429,7 +429,8 @@
             // Update overall match progress
             const totalTimeRemaining = getTotalTimeRemaining();
             overallTimer.textContent = formatTime(totalTimeRemaining);
-            const overallProgress = (totalTimeRemaining / TOTAL_MATCH_DURATION) * 100;
+            const timeElapsed = TOTAL_MATCH_DURATION - totalTimeRemaining;
+            const overallProgress = (timeElapsed / TOTAL_MATCH_DURATION) * 100;
             overallProgressBar.style.width = overallProgress + '%';
 
             // Update phase display
