@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRC 2026 Match Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+        }
+
+        .phase-display {
+            font-size: 4rem;
+            font-weight: bold;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            transition: background-color 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .timer-display {
+            font-size: 12rem;
+            font-weight: bold;
+            margin: 40px 0;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.7);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 40px 0;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.1s linear, background-color 0.3s ease;
+            border-radius: 20px;
+        }
+
+        .controls {
+            margin-top: 50px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-size: 2rem;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #startBtn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #startBtn:hover {
+            background: #45a049;
+        }
+
+        #stopBtn {
+            background: #ff9800;
+            color: white;
+        }
+
+        #stopBtn:hover {
+            background: #e68900;
+        }
+
+        #resetBtn {
+            background: #f44336;
+            color: white;
+        }
+
+        #resetBtn:hover {
+            background: #da190b;
+        }
+
+        .keyboard-hint {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .phases-list {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .phase-item {
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .phase-item.active {
+            transform: scale(1.1);
+            border: 3px solid white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .phase-item.completed {
+            opacity: 0.4;
+        }
+
+        /* Phase-specific colors */
+        .phase-auto {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+        }
+
+        .phase-transition {
+            background: linear-gradient(135deg, #FF8C00, #FF6347);
+        }
+
+        .phase-shift {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+
+        .phase-endgame {
+            background: linear-gradient(135deg, #f44336, #c62828);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .phase-display {
+                font-size: 2.5rem;
+                padding: 20px;
+            }
+
+            .timer-display {
+                font-size: 6rem;
+            }
+
+            button {
+                font-size: 1.5rem;
+                padding: 15px 30px;
+            }
+
+            .keyboard-hint {
+                font-size: 1rem;
+            }
+
+            .phase-item {
+                font-size: 0.9rem;
+                padding: 10px 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .phase-display {
+                font-size: 1.8rem;
+                padding: 15px;
+            }
+
+            .timer-display {
+                font-size: 4rem;
+            }
+
+            button {
+                font-size: 1.2rem;
+                padding: 12px 25px;
+            }
+
+            .phase-item {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="phaseDisplay" class="phase-display phase-auto">AUTO</div>
+        <div id="timerDisplay" class="timer-display">0:20</div>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar phase-auto"></div>
+        </div>
+        <div id="phasesList" class="phases-list"></div>
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn">Stop</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div class="keyboard-hint">
+            Keyboard: SPACE = Start/Stop | R = Reset
+        </div>
+    </div>
+
+    <script>
+        // Phase definitions
+        const PHASES = [
+            { name: 'AUTO', duration: 20, color: 'phase-auto' },
+            { name: 'TRANSITION SHIFT', duration: 10, color: 'phase-transition' },
+            { name: 'SHIFT 1', duration: 25, color: 'phase-shift' },
+            { name: 'SHIFT 2', duration: 25, color: 'phase-shift' },
+            { name: 'SHIFT 3', duration: 25, color: 'phase-shift' },
+            { name: 'SHIFT 4', duration: 25, color: 'phase-shift' },
+            { name: 'END GAME', duration: 30, color: 'phase-endgame' }
+        ];
+
+        // Timer state
+        let currentPhaseIndex = 0;
+        let timeRemaining = PHASES[0].duration;
+        let isRunning = false;
+        let lastTimestamp = null;
+        let animationFrameId = null;
+
+        // Audio context for beeps
+        let audioContext = null;
+
+        // DOM elements
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const phasesList = document.getElementById('phasesList');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Initialize audio context on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play a beep sound
+        function playBeep(frequency = 800, duration = 200) {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        }
+
+        // Format time as M:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Render phases list
+        function renderPhasesList() {
+            phasesList.innerHTML = '';
+            PHASES.forEach((phase, index) => {
+                const phaseItem = document.createElement('div');
+                phaseItem.className = `phase-item ${phase.color}`;
+                phaseItem.textContent = phase.name;
+                phaseItem.dataset.index = index;
+                phasesList.appendChild(phaseItem);
+            });
+        }
+
+        // Update phases list highlighting
+        function updatePhasesList() {
+            const items = phasesList.querySelectorAll('.phase-item');
+            items.forEach((item, index) => {
+                item.classList.remove('active', 'completed');
+                if (index === currentPhaseIndex) {
+                    item.classList.add('active');
+                } else if (index < currentPhaseIndex) {
+                    item.classList.add('completed');
+                }
+            });
+        }
+
+        // Update display
+        function updateDisplay() {
+            const phase = PHASES[currentPhaseIndex];
+
+            // Update phase display
+            phaseDisplay.textContent = phase.name;
+            phaseDisplay.className = 'phase-display ' + phase.color;
+
+            // Update timer display
+            timerDisplay.textContent = formatTime(timeRemaining);
+
+            // Update progress bar
+            const progress = (timeRemaining / phase.duration) * 100;
+            progressBar.style.width = progress + '%';
+            progressBar.className = 'progress-bar ' + phase.color;
+
+            // Update phases list
+            updatePhasesList();
+        }
+
+        // Advance to next phase
+        function nextPhase() {
+            if (currentPhaseIndex < PHASES.length - 1) {
+                currentPhaseIndex++;
+                timeRemaining = PHASES[currentPhaseIndex].duration;
+                playBeep(1000, 300); // Higher pitch for phase change
+                updateDisplay();
+            } else {
+                // Match ended
+                stop();
+                playBeep(600, 500); // Lower pitch for end
+            }
+        }
+
+        // Timer loop using requestAnimationFrame for smooth updates
+        function timerLoop(timestamp) {
+            if (!isRunning) return;
+
+            if (lastTimestamp === null) {
+                lastTimestamp = timestamp;
+            }
+
+            const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
+            lastTimestamp = timestamp;
+
+            timeRemaining -= deltaTime;
+
+            if (timeRemaining <= 0) {
+                timeRemaining = 0;
+                updateDisplay();
+                nextPhase();
+            } else {
+                updateDisplay();
+            }
+
+            if (isRunning) {
+                animationFrameId = requestAnimationFrame(timerLoop);
+            }
+        }
+
+        // Start timer
+        function start() {
+            if (isRunning) return;
+
+            initAudio();
+            isRunning = true;
+            lastTimestamp = null;
+            playBeep(1200, 150);
+            animationFrameId = requestAnimationFrame(timerLoop);
+        }
+
+        // Stop timer
+        function stop() {
+            isRunning = false;
+            lastTimestamp = null;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // Reset timer
+        function reset() {
+            stop();
+            currentPhaseIndex = 0;
+            timeRemaining = PHASES[0].duration;
+            updateDisplay();
+            playBeep(400, 100);
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', start);
+        stopBtn.addEventListener('click', stop);
+        resetBtn.addEventListener('click', reset);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (isRunning) {
+                    stop();
+                } else {
+                    start();
+                }
+            } else if (e.code === 'KeyR') {
+                e.preventDefault();
+                reset();
+            }
+        });
+
+        // Initialize display
+        renderPhasesList();
+        updateDisplay();
+    </script>
+</body>
+</html>
